@@ -8,7 +8,7 @@ const Top = (props) => {
   return (
     <div id="nav-container">
       <nav className="top-nav">
-        <h1 className="statdle-title">Statdle</h1>
+        <h1 className="statdle-title">Statdle Endless</h1>
         <p>{props.guessCount + fillerText}</p>
         <div>
           <span

@@ -22,7 +22,6 @@ class App extends React.Component {
     this.doRandom = this.doRandom.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
     this.togglePopup = this.togglePopup.bind(this);
-    this.updateStorageState = this.updateStorageState.bind(this);
     this.updateStorageStats = this.updateStorageStats.bind(this);
 
     this.state = {
@@ -30,7 +29,6 @@ class App extends React.Component {
       history: [], //{<country>, <country>, ...}
       modalType: 1, //0: "none", 1: "how" 2: "win from top" 3: "win"
       popupType: 0, //0: "none", 1: "Already Guessed", 2: "Invalid Country", 3: "Copied to Clipboard"
-      finalState: {},
       win: false,
     };
   }
@@ -63,20 +61,6 @@ class App extends React.Component {
     localStorage.setItem("stats", JSON.stringify(stats));
   }
 
-  /* newCatagories, newHistory, newWin, finalState (conditional)*/
-  updateStorageState(newCatagories, newHistory, newWin, finalState) {
-    const state = JSON.parse(localStorage.getItem("state"));
-    state.catagories = newCatagories;
-    state.history = newHistory;
-    state.win = newWin;
-
-    //if it exists, add finalstate as well
-    if (finalState) {
-      state.finalState = finalState;
-    }
-    localStorage.setItem("state", JSON.stringify(state));
-  }
-
   /* pick target country and catagories */
   seedValues() {
     if (!localStorage.getItem("stats")) {
@@ -90,46 +74,17 @@ class App extends React.Component {
       localStorage.setItem("stats", JSON.stringify(stats));
     }
 
-    let today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    if (localStorage.getItem("state")) {
-      const state = JSON.parse(localStorage.getItem("state"));
-
-      if (state.date === today.toISOString()) {
-        this.setState({
-          catagories: state.catagories,
-          history: state.history,
-          finalState: state.finalState,
-          win: state.win,
-          modalType: 0,
-        });
-        return;
-      }
-    }
-
-    // Generate randomness from todays date
-    const seedrandom = require("seedrandom");
-    const date = new Date(); //used for seeding date
-    const gen = seedrandom(date.toDateString());
-    const countryRandIndex = Math.floor(gen() * data.length); //country randomizer
-
-    // Select target country
+    const countryRandIndex = Math.floor(Math.random() * data.length); //country randomizer
     const targetCountry = data[countryRandIndex];
-    // console.log(targetCountry);
-
+    console.log(targetCountry);
+    const catagoriesList = Object.keys(catagoryNames);
     // Select which 4 catagories
-    const seeds = this.doRandom(
-      4,
-      Object.keys(catagoryNames).length,
-      date.toDateString(),
-      seedrandom
-    );
+    const seeds = this.doRandom(4, catagoriesList.length);
 
     // Generate inital state values
     const initialState = {};
     for (let i in seeds) {
-      var key = Object.keys(catagoryNames)[seeds[i]];
+      var key = catagoriesList[seeds[i]];
       initialState[key] = {
         target: targetCountry[key],
         high: "",
@@ -145,15 +100,6 @@ class App extends React.Component {
       catagories: initialState,
       win: false,
     });
-
-    //set local storage state
-    const state = {
-      catagories: initialState,
-      history: [],
-      date: today.toISOString(),
-    };
-
-    localStorage.setItem("state", JSON.stringify(state));
   }
 
   updateDisplay(countryData) {
@@ -165,37 +111,26 @@ class App extends React.Component {
 
     // check if target country
     if (countryData[check[0]] === check[1].target) {
-      const finalState = this.state.catagories;
-
-      this.setState({
-        finalState: finalState,
-        win: true,
-      });
-
       this.updateStorageStats(newHistory.length);
-
-      this.toggleModal(3); //win condtion
-
       for (let i in Object.keys(this.state.catagories)) {
         var keyWin = Object.keys(this.state.catagories)[i];
         const catagory = this.state.catagories[keyWin];
         newCatagories[keyWin] = {
           target: catagory.target,
-          high: countryData[keyWin],
+          high: catagory.target,
           highName: countryData.name,
-          low: countryData[keyWin],
+          low: catagory.target,
           lowName: countryData.name,
           lineThing: 0,
         };
+
+        this.setState({
+          catagories: newCatagories,
+          history: newHistory,
+          win: true,
+        });
       }
-
-      this.setState({
-        catagories: newCatagories,
-        history: newHistory,
-      });
-
-      this.updateStorageState(newCatagories, newHistory, true, finalState);
-
+      this.toggleModal(3); //win condtion
       return;
     }
 
@@ -250,8 +185,6 @@ class App extends React.Component {
       catagories: newCatagories,
       history: newHistory,
     });
-
-    this.updateStorageState(newCatagories, newHistory, false, false);
   }
 
   togglePopup(type = 0) {
@@ -292,16 +225,17 @@ class App extends React.Component {
   range: total 0-N
   seed: seed for randomness
   */
-  doRandom(number, range, seed, seedrandom) {
+  doRandom(number, range) {
     var retArr = [];
     for (let i = 0; i < range; i++) {
       retArr.push(i);
     }
 
+    // remove from this new list
     while (retArr.length > number) {
-      var rand = seedrandom(seed + retArr.length);
-      retArr.splice(Math.floor(rand() * retArr.length), 1);
+      retArr.splice(Math.floor(Math.random() * retArr.length), 1);
     }
+
     return retArr;
   }
 
@@ -319,7 +253,7 @@ class App extends React.Component {
             toggleModal={this.toggleModal}
             togglePopup={this.togglePopup}
             history={this.state.history}
-            catagories={this.state.finalState}
+            catagories={this.state.catagories}
             special={false}
             win={this.state.win}
           />
@@ -331,7 +265,7 @@ class App extends React.Component {
             toggleModal={this.toggleModal}
             togglePopup={this.togglePopup}
             history={this.state.history}
-            catagories={this.state.finalState}
+            catagories={this.state.catagories}
             special={true}
             win={this.state.win}
           />

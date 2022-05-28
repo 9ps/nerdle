@@ -23,41 +23,10 @@ class ModalWin extends React.Component {
 
   /* what is returned when share clicked */
   share(e) {
-    let fillerText = " Guesses";
-    if (this.props.history.length === 1) {
-      fillerText = " Guess";
-    }
-
-    // Get day of challenge
-    const start = new Date("April 20, 2022 00:00:00");
-    let today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const gameNumber = (today - start) / 86400000;
-
     var text =
-      "Statdle " +
-      gameNumber +
-      ": " +
+      "I got #StatdleEndless in " +
       this.props.history.length +
-      fillerText +
-      "\n\nlast guess range - category\n";
-
-    Object.entries(this.props.catagories).forEach((key) => {
-      text += "↓↑ ";
-      const high = key[1].high;
-      const low = key[1].low;
-      if (high === "" && low === "") {
-        text += 194;
-      } else if (low === "") {
-        text += 194 - high;
-      } else if (high === "") {
-        text += low;
-      } else {
-        text += low - high;
-      }
-      text += " - " + catagoryNames[key[0]] + "\n";
-    });
-    text += "\nhttps://9ps.github.io/statdle/";
+      " and all I got was this lousy message!\n\nhttps://9ps.github.io/statdle/";
     navigator.clipboard.writeText(text);
     this.props.togglePopup(3);
   }
